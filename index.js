@@ -1,25 +1,33 @@
 const express = require('express');
-const fetch = require('node-fetch');
+const https = require('https');
 const app = express();
 
 app.use(express.json());
 
 app.post('/', async (req, res) => {
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify(req.body)
-    });
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const body = JSON.stringify(req.body);
+  
+  const options = {
+    hostname: 'api.anthropic.com',
+    path: '/v1/messages',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'Content-Length': Buffer.byteLength(body)
+    }
+  };
+
+  const apiReq = https.request(options, (apiRes) => {
+    let data = '';
+    apiRes.on('data', chunk => data += chunk);
+    apiRes.on('end', () => res.json(JSON.parse(data)));
+  });
+
+  apiReq.on('error', (err) => res.status(500).json({ error: err.message }));
+  apiReq.write(body);
+  apiReq.end();
 });
 
 const PORT = process.env.PORT || 3000;
