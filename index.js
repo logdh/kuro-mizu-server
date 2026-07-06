@@ -1,4 +1,4 @@
-const express = require('express');
+5const express = require('express');
 const https = require('https');
 const app = express();
 
@@ -50,3 +50,6 @@ app.post('/', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.get('/', (req, res) => {
+  res.json({ status: 'ok' });
+});
